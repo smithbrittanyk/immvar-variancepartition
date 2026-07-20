@@ -1,0 +1,155 @@
+from pathlib import Path
+import argparse
+import re
+
+import pandas as pd
+
+
+def clean_column_name(name: str) -> str:
+    """Convert metadata labels into simple column names """
+    name = name.lower()
+    name = name.replace("(yrs)", "")
+    name = re.sub(r"[^a-z0-9]+", "_", name)
+
+    return name.strip("_")
+
+
+def parse_characteristics(metadata: pd.DataFrame) -> pd.DataFrame:
+    """Split GEO characteristic fields into separate metadata columns """
+    characteristic_columns = [
+        column
+        for column in metadata.columns
+        if column.startswith("!Sample_characteristics_ch1")
+    ]
+
+    characteristics = {}
+
+    for column in characteristic_columns:
+        split_values = metadata[column].str.split(":", n=1, expand=True)
+
+        field_name = clean_column_name(split_values.iloc[0, 0])
+
+        if field_name == "cell_type":
+            field_name = "cell_type_description"
+
+        characteristics[field_name] = split_values.iloc[:, 1].str.strip()
+    characteristics = pd.DataFrame(characteristics, index=metadata.index)
+
+    # Standardize the column name.
+    if "gender" in characteristics.columns:
+        characteristics = characteristics.rename(columns={"gender": "sex"})
+
+    # Standardize the values.
+    if "sex" in characteristics.columns:
+        characteristics["sex"] = (
+            characteristics["sex"]
+            .str.strip()
+            .str.upper()
+            .map(
+                {
+                    "F": "Female",
+                    "M": "Male",
+                    "FEMALE": "Female",
+                    "MALE": "Male",
+                }
+            )
+        )
+
+    return characteristics
+
+
+
+
+def parse_sample_title(sample_title: pd.Series) -> pd.DataFrame:
+    """Derive individual, cell type, and replicate information."""
+    titles = sample_title.str.replace(r"\s+\[[^\]]+\]$", "", regex=True)
+
+    parsed = titles.str.extract(
+        r"^(?P<individual_id>IGTB\d+)"
+        r"\.(?P<sample_code>F?(?:4|41|42|14))"
+        r"(?P<replicate>(?:BR|TR)\d+)?$"
+    )
+
+    parsed["cell_type"] = parsed["sample_code"].replace(
+        {
+            "4": "CD4",
+            "F4": "CD4",
+            "41": "CD4",
+            "F41": "CD4",
+            "42": "CD4",
+            "F42": "CD4",
+            "14": "CD14",
+            "F14": "CD14",
+        }
+    )
+
+    parsed["replicate"] = parsed["replicate"].fillna("primary")
+    parsed["sample_code"] = parsed["sample_code"].astype("string")
+    
+    return parsed[["individual_id", "sample_code", "cell_type", "replicate"]]
+
+
+def clean_metadata(metadata: pd.DataFrame) -> pd.DataFrame:
+    """Create an analysis ready metadata table."""
+    characteristics = parse_characteristics(metadata)
+    title_fields = parse_sample_title(metadata["!Sample_title"])
+
+    cleaned = pd.DataFrame(
+        {
+            "geo_accession": metadata["!Sample_geo_accession"],
+            "sample_title": metadata["!Sample_title"],
+        }
+    )
+
+    cleaned = pd.concat([cleaned, title_fields, characteristics], axis=1)
+
+    if "age" in cleaned.columns:
+        cleaned["age"] = pd.to_numeric(cleaned["age"], errors="coerce")
+
+    if "batch" in cleaned.columns:
+        cleaned["batch"] = pd.to_numeric(cleaned["batch"], errors="coerce")
+
+    return cleaned
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(
+        description="Clean metadata parsed from GEO Series Matrix files."
+    )
+    parser.add_argument(
+        "input_file",
+        type=Path,
+        help="Raw metadata CSV produced by 01_parse_geo.py.",
+    )
+    parser.add_argument(
+        "output_file",
+        type=Path,
+        help="Path for the cleaned metadata CSV.",
+    )
+
+    args = parser.parse_args()
+
+    metadata = pd.read_csv(args.input_file, index_col=0)
+    cleaned = clean_metadata(metadata)
+
+    args.output_file.parent.mkdir(parents=True, exist_ok=True)
+    cleaned.to_csv(args.output_file, index=False)
+
+    print(
+        f"Cleaned metadata: "
+        f"{cleaned.shape[0]:,} samples x {cleaned.shape[1]:,} fields"
+    )
+    print(f"Wrote {args.output_file}")
+
+    print("\nMissing values:")
+    print(cleaned.isna().sum())
+
+    print("\nCell types:")
+    print(cleaned["cell_type"].value_counts(dropna=False))
+
+    print("\nReplicate types:")
+    print(cleaned["replicate"].value_counts(dropna=False))
+
+
+if __name__ == "__main__":
+    main()
