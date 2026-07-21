@@ -3,7 +3,7 @@
 This project applies variancePartition package to the ImmVar CD4 T-cell
 and CD14 monocyte expression datasets. The goal is to
 quantify how much gene-expression variation is associated with cell type,
-individual donor,age,sex, batch, and residual variation.
+individual donor, age, sex, batch, and residual variation.
 
 ## GEO Data
 
@@ -153,8 +153,8 @@ Rscript scripts/07_summarize_variance_partition.R \
 
 Cell type was the dominant source of gene-expression variation in the combined
 ImmVar dataset. The paired-donor sensitivity analysis produced nearly identical
-results. Idividual and residenual variation were more dominant when CD4 and CD14
-cells were analyzed seperately. Figures and summaries are available in
+results. Individual and residual variation were more dominant when CD4 and CD14
+cells were analyzed separately. Figures and summaries are available in
 results/variance_partition.
 
 
