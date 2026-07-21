@@ -82,8 +82,7 @@ def main() -> None:
 
     expression, metadata = parse_geo(args.input_file)
 
-
-    """ Parsing Checks """
+    # Validate parsed data.
     assert expression.shape[1] == metadata.shape[0], (
         "Expression and metadata sample counts do not match."
     )
@@ -95,9 +94,7 @@ def main() -> None:
     assert not expression.columns.duplicated().any(), (
         "Expression sample names are duplicated."
     )
-
-
-    """ Output processed data """ 
+    # Write processed data.
     expression_file = args.output_dir / f"{args.sample_type}_expression.csv"
     metadata_file = args.output_dir / f"{args.sample_type}_metadata_raw.csv"
 
@@ -117,7 +114,7 @@ def main() -> None:
 
     print("\nFirst metadata fields:")
     print(metadata.columns[:10].tolist())
-    
+
 
 if __name__ == "__main__":
     main()

@@ -6,7 +6,7 @@ import pandas as pd
 
 
 def clean_column_name(name: str) -> str:
-    """Convert metadata labels into simple column names """
+    """Convert metadata labels into simple column names."""
     name = name.lower()
     name = name.replace("(yrs)", "")
     name = re.sub(r"[^a-z0-9]+", "_", name)
@@ -15,7 +15,7 @@ def clean_column_name(name: str) -> str:
 
 
 def parse_characteristics(metadata: pd.DataFrame) -> pd.DataFrame:
-    """Split GEO characteristic fields into separate metadata columns """
+    """Split GEO characteristic fields into separate metadata columns."""
     characteristic_columns = [
         column
         for column in metadata.columns
@@ -57,9 +57,6 @@ def parse_characteristics(metadata: pd.DataFrame) -> pd.DataFrame:
 
     return characteristics
 
-
-
-
 def parse_sample_title(sample_title: pd.Series) -> pd.DataFrame:
     """Derive individual, cell type, and replicate information."""
     titles = sample_title.str.replace(r"\s+\[[^\]]+\]$", "", regex=True)
@@ -85,7 +82,7 @@ def parse_sample_title(sample_title: pd.Series) -> pd.DataFrame:
 
     parsed["replicate"] = parsed["replicate"].fillna("primary")
     parsed["sample_code"] = parsed["sample_code"].astype("string")
-    
+
     return parsed[["individual_id", "sample_code", "cell_type", "replicate"]]
 
 

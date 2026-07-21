@@ -1,18 +1,25 @@
 # Python
 __pycache__/
-*.pyc
+*.py[cod]
 
 # Jupyter
 .ipynb_checkpoints/
 
-# macOS
-.DS_Store
+# R
+.RData
+.Rhistory
+.Rproj.user/
 
-# Conda
+# Local environments
+.conda/
 .env
-.conda
+.venv/
 
-# Data
+# Editors and operating systems
+*~
+.DS_Store
+.vscode/
+
+# Downloaded and generated data
 data/raw/
 data/processed/
-data/results/
