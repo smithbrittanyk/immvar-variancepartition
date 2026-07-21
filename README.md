@@ -18,15 +18,16 @@ data/raw/GSE56034_series_matrix.txt.gz
 
 ## Project structure
 
+```text
 immvar-variancepartition/
 ├── data/                     # downloaded and generated data (Git-ignored)
-├── notebooks/                # metadata, expression, and combined-data QC
+├── notebooks/                # metadata, expression, and combined data QC
 ├── results/
 │   └── variance_partition/   # model outputs, summaries, and figures
 ├── scripts/                  # numbered preprocessing and analysis scripts
 ├── environment.yml
 └── README.md
-
+```
 
 ## Environment
 
@@ -107,7 +108,7 @@ types:
 Rscript scripts/05_run_paired_variance_partition.R
 ```
 
-The within-cell-type analyses fit CD4 and CD14 separately:
+The within cell type analyses fit CD4 and CD14 separately:
 
 ```
 Rscript scripts/06_run_cell_type_variance_partition.R
@@ -120,7 +121,7 @@ The combined and paired models use:
   (1 | individual_id) + (1 | cell_type)
 ```
 
-The cell-type-specific models omit `cell_type`
+The cell type specific models omit `cell_type`
 
 
 ### 5. Generate summaries and figures
